@@ -643,7 +643,7 @@ class CtaEngine(BaseEngine):
             self.write_log(_("创建策略失败，本地代码缺失交易所后缀"))
             return
 
-        __, exchange_str = vt_symbol.split(".")
+        __, exchange_str = vt_symbol.rsplit(".", 1)
         if exchange_str not in Exchange.__members__:
             self.write_log(_("创建策略失败，本地代码的交易所后缀不正确"))
             return
