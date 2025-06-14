@@ -1,9 +1,10 @@
 import importlib
 import traceback
 from collections import defaultdict
+from decimal import Decimal
 from pathlib import Path
 from types import ModuleType
-from typing import Any
+from typing import Any, Dict
 from collections.abc import Callable
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
@@ -52,6 +53,7 @@ from .base import (
     StopOrderStatus,
     STOPORDER_PREFIX
 )
+from .strategies.execution_tuple import ExecutionTuple
 from .template import CtaTemplate, TargetPosTemplate
 from .locale import _
 
@@ -832,7 +834,25 @@ class CtaEngine(BaseEngine):
         """
         Load strategy data from json file.
         """
-        self.strategy_data = load_json(self.data_filename)
+        json_strategy_data = load_json(self.data_filename)
+        self.strategy_data = self.patch_strategy_from_json(json_strategy_data)
+
+    def patch_strategy_from_json(self, strategy_data: Dict):
+        new_strategy_data = {}
+        for vt_symbol, values in strategy_data.items():
+            new_values = values.copy()
+            if 'executions' in values:
+                executions = values['executions']
+                new_values['executions'] = [
+                    ExecutionTuple(
+                        date=execution['date'],
+                        price=Decimal(str(execution['price'])),
+                        volume=Decimal(str(execution['volume']))
+                    )
+                    for execution in executions
+                ]
+            new_strategy_data[vt_symbol] = new_values
+        return new_strategy_data
 
     def sync_strategy_data(self, strategy: CtaTemplate) -> None:
         """
@@ -843,7 +863,24 @@ class CtaEngine(BaseEngine):
         data.pop("trading")
 
         self.strategy_data[strategy.strategy_name] = data
-        save_json(self.data_filename, self.strategy_data)
+        patched_data = self.patch_strategy_to_json(self.strategy_data)
+        save_json(self.data_filename, patched_data)
+
+    def patch_strategy_to_json(self, strategy_data: Dict):
+        new_strategy_data = {}
+        for vt_symbol, values in strategy_data.items():
+            new_values = values.copy()
+            if 'executions' in values:
+                new_values['executions'] = [
+                    {
+                        "date": execution.date,
+                        "price": str(execution.price),
+                        "volume": str(execution.volume)
+                    }
+                    for execution in values['executions']
+                ]
+            new_strategy_data[vt_symbol] = new_values
+        return new_strategy_data
 
     def get_all_strategy_class_names(self) -> list:
         """
@@ -928,7 +965,9 @@ class CtaEngine(BaseEngine):
         save_json(self.setting_filename, self.strategy_setting)
 
         self.strategy_data.pop(strategy_name, None)
-        save_json(self.data_filename, self.strategy_data)
+        patched_data = self.patch_strategy_to_json(self.strategy_data)
+
+        save_json(self.data_filename, patched_data)
 
     def put_stop_order_event(self, stop_order: StopOrder) -> None:
         """

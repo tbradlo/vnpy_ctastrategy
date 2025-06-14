@@ -198,7 +198,7 @@ class GridBuyStrategy(CtaTemplate):
         bid_price = self.to_decimal(tick.bid_price_1 if tick.bid_price_1 > 0 else tick.pre_close)
         ask_price = self.to_decimal(tick.ask_price_1 if tick.ask_price_1 > 0 else tick.pre_close)
 
-        self.current_value = Decimal(str(bid_price * self.pos))
+        self.current_value = bid_price * self.to_decimal(self.pos)
         self.bg.update_tick(tick) # TODO needed?
         if self.trading:
             self.calculate()
@@ -245,7 +245,7 @@ class GridBuyStrategy(CtaTemplate):
         self.calculate()
 
     def send_buy(self, buy_price: Decimal):
-        if buy_price > self.max_buy_price:
+        if buy_price > Decimal(str(self.max_buy_price)):
             # self.write_log(f"Max buy price {self.max_buy_price} reached. Buy skipped")
             return
 

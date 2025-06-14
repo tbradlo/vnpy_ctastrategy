@@ -138,7 +138,7 @@ class BacktestingEngine:
         self.pricetick = pricetick
         self.start = start
 
-        self.symbol, exchange_str = self.vt_symbol.split(".")
+        self.symbol, exchange_str = self.vt_symbol.rsplit(".", 1)
         self.exchange = Exchange(exchange_str)
 
         self.capital = capital
