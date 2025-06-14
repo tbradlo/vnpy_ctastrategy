@@ -97,22 +97,38 @@ class TestPercentagePricesCalculator(TestCase):
                           Decimal('81.60'),
                           Decimal('86.90')], got_sell_prices)
 
-    def test_when_INTC_should_calculate_buy_prices(self):
+    def test_when_NEM_should_calculate_buy_prices(self):
         # given
-        last_price = Decimal("49.24")
+        last_price = Decimal("60.0")
 
-        prices_calculator = PercentagePricesCalculator(buy_step=Decimal("1.06"), sell_step=0, price_increments=SortedDict({
-            Decimal("0"): Decimal("0.0001"),
-            Decimal("5"): Decimal("0.005"),
-            Decimal("10"): Decimal("0.01")
+        prices_calculator = PercentagePricesCalculator(buy_step=Decimal("1.1"), sell_step=0, price_increments=SortedDict({
+            Decimal("0"): Decimal("0.01")
         }))
 
         # when
         got_next_buys = prices_calculator.next_buys(last_price, 5)
 
         # then
-        self.assertEqual([Decimal('28.60'),
-                          Decimal('98.69'),
-                          Decimal('92.24'),
-                          Decimal('86.20'),
-                          Decimal('80.56')], got_next_buys)
+        self.assertEqual([Decimal('43.91'),
+                          Decimal('39.92'),
+                          Decimal('36.29'),
+                          Decimal('32.99'),
+                          Decimal('29.99')], got_next_buys)
+
+    def test_when_EC_should_calculate_buy_prices(self):
+        # given
+        last_price = Decimal("12.0")
+
+        prices_calculator = PercentagePricesCalculator(buy_step=Decimal("1.1"), sell_step=0, price_increments=SortedDict({
+            Decimal("0"): Decimal("0.01")
+        }))
+
+        # when
+        got_next_buys = prices_calculator.next_buys(last_price, 5)
+
+        # then
+        self.assertEqual([Decimal('10.51'),
+                          Decimal('9.56'),
+                          Decimal('8.69'),
+                          Decimal('7.90'),
+                          Decimal('7.18')], got_next_buys)
